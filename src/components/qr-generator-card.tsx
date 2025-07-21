@@ -91,6 +91,9 @@ export function QrGeneratorCard() {
     if (!qrCodeInstance.current || !inputValue.trim()) return;
 
     setIsGenerating(true);
+    
+    // The library updates asynchronously, but we can't await it.
+    // We'll use a timeout to simulate the generation time.
     qrCodeInstance.current.update({
         data: inputValue,
         dotsOptions: {
@@ -102,8 +105,11 @@ export function QrGeneratorCard() {
         },
         image: logo || ''
     });
-    // Give it a moment to re-render
-    setTimeout(() => setIsGenerating(false), 500);
+
+    // Timeout to allow the animation to play
+    setTimeout(() => {
+        setIsGenerating(false);
+    }, 1500); // Should match the animation duration
   };
 
   useEffect(() => {
@@ -112,7 +118,7 @@ export function QrGeneratorCard() {
       if (inputValue) {
         updateQrCode();
       }
-    }, 300);
+    }, 500); // Increased debounce time for better user experience
 
     return () => {
       clearTimeout(handler);
@@ -244,13 +250,14 @@ export function QrGeneratorCard() {
             </TabsContent>
         </Tabs>
         
-        <div className="flex h-72 items-center justify-center rounded-lg border border-dashed bg-muted/50 p-4">
-            <div ref={qrRef} className={cn(isGenerating && 'opacity-50 transition-opacity')} />
+        <div className="relative flex h-72 items-center justify-center rounded-lg border border-dashed bg-muted/50 p-4 overflow-hidden">
+            <div ref={qrRef} className={cn(isGenerating && 'opacity-20 transition-opacity duration-500')} />
             {!inputValue && (
                  <div className="absolute text-center text-sm text-muted-foreground">
                     Enter a URL to see your QR code.
                  </div>
             )}
+             <div className={cn('scan-line', isGenerating && 'scanning')} />
         </div>
 
       </CardContent>
@@ -258,7 +265,7 @@ export function QrGeneratorCard() {
         <Button
           onClick={handleDownload}
           className="w-full"
-          disabled={!inputValue || isDownloading}
+          disabled={!inputValue || isDownloading || isGenerating}
         >
           {isDownloading ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
