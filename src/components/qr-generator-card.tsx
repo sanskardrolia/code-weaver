@@ -73,6 +73,13 @@ const QrCodeAnimation = ({ onAnimationComplete }: { onAnimationComplete: () => v
     );
   };
   
+const colorOptions = [
+    { name: 'Black', value: '000000' },
+    { name: 'Indigo', value: '4f46e5' },
+    { name: 'Teal', value: '14b8a6' },
+    { name: 'Crimson', value: 'dc2626' },
+    { name: 'Amber', value: 'f59e0b' },
+];
 
 export function QrGeneratorCard() {
   const [inputValue, setInputValue] = useState('');
@@ -81,6 +88,7 @@ export function QrGeneratorCard() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [showAnimation, setShowAnimation] = useState(false);
   const [showQrImage, setShowQrImage] = useState(false);
+  const [selectedColor, setSelectedColor] = useState('000000');
   const { toast } = useToast();
 
   const handleGenerate = () => {
@@ -98,8 +106,7 @@ export function QrGeneratorCard() {
     setQrCodeUrl(''); // Clear previous QR code
 
     const encodedValue = encodeURIComponent(inputValue);
-    // Pre-fetch the image but don't show it yet
-    const highResUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodedValue}&qzone=1`;
+    const highResUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodedValue}&qzone=1&color=${selectedColor}`;
     const img = new window.Image();
     img.src = highResUrl;
     img.onload = () => {
@@ -182,6 +189,29 @@ export function QrGeneratorCard() {
             </Button>
           </div>
         </div>
+
+        <div className="space-y-2">
+          <Label>Color</Label>
+          <div className="flex flex-wrap gap-2">
+            {colorOptions.map((color) => (
+              <Button
+                key={color.value}
+                variant="outline"
+                size="icon"
+                className={cn(
+                  'h-8 w-8 rounded-full',
+                  selectedColor === color.value && 'ring-2 ring-primary ring-offset-2'
+                )}
+                onClick={() => setSelectedColor(color.value)}
+                style={{ backgroundColor: `#${color.value}` }}
+                aria-label={`Select color ${color.name}`}
+              >
+                {selectedColor === color.value && <div className="h-4 w-4 rounded-full border-2 border-background" />}
+              </Button>
+            ))}
+          </div>
+        </div>
+
 
         <div className="flex h-64 items-center justify-center rounded-lg border border-dashed bg-muted/50 p-4">
           {showAnimation && <QrCodeAnimation onAnimationComplete={handleAnimationComplete} />}
