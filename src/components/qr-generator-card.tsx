@@ -47,6 +47,9 @@ const cornerStyleOptions: {name: string, value: CornerSquareType}[] = [
     { name: 'Extra Rounded', value: 'extra-rounded'},
 ];
 
+const QR_CODE_SIZE_LARGE = 288;
+const QR_CODE_SIZE_SMALL = 224;
+
 export function QrGeneratorCard() {
   const [inputValue, setInputValue] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -57,16 +60,30 @@ export function QrGeneratorCard() {
   const [logo, setLogo] = useState<string | null>(null);
   const [dotStyle, setDotStyle] = useState<DotType>('square');
   const [cornerStyle, setCornerStyle] = useState<CornerSquareType>('square');
+  const [qrCodeSize, setQrCodeSize] = useState(QR_CODE_SIZE_LARGE);
 
   const { toast } = useToast();
   const qrRef = useRef<HTMLDivElement>(null);
   const qrCodeInstance = useRef<QRCodeStyling | null>(null);
 
   useEffect(() => {
+    const updateSize = () => {
+      if (window.innerWidth < 640) { // sm breakpoint
+        setQrCodeSize(QR_CODE_SIZE_SMALL);
+      } else {
+        setQrCodeSize(QR_CODE_SIZE_LARGE);
+      }
+    };
+    window.addEventListener('resize', updateSize);
+    updateSize(); // Set initial size
+    return () => window.removeEventListener('resize', updateSize);
+  }, []);
+
+  useEffect(() => {
     if (QRCodeStylingClient && qrRef.current) {
         qrCodeInstance.current = new QRCodeStylingClient({
-            width: 256,
-            height: 256,
+            width: qrCodeSize,
+            height: qrCodeSize,
             data: 'https://www.firebasestudio.ai',
             image: '',
             dotsOptions: {
@@ -86,15 +103,22 @@ export function QrGeneratorCard() {
         });
         qrCodeInstance.current.append(qrRef.current);
     }
-  }, []);
+  }, [qrCodeSize]);
+
+  useEffect(() => {
+    if (qrCodeInstance.current) {
+      qrCodeInstance.current.update({
+        width: qrCodeSize,
+        height: qrCodeSize,
+      });
+    }
+  }, [qrCodeSize]);
 
   const updateQrCode = () => {
     if (!qrCodeInstance.current || !inputValue.trim()) return;
 
     setIsGenerating(true);
     
-    // The library updates asynchronously, but we can't await it.
-    // We'll use a timeout to simulate the generation time.
     qrCodeInstance.current.update({
         data: inputValue,
         dotsOptions: {
@@ -107,19 +131,17 @@ export function QrGeneratorCard() {
         image: logo || ''
     });
 
-    // Timeout to allow the animation to play
     setTimeout(() => {
         setIsGenerating(false);
-    }, 1500); // Should match the animation duration
+    }, 1500);
   };
 
   useEffect(() => {
-    // Debounce QR code update
     const handler = setTimeout(() => {
       if (inputValue) {
         updateQrCode();
       }
-    }, 500); // Increased debounce time for better user experience
+    }, 500);
 
     return () => {
       clearTimeout(handler);
@@ -208,10 +230,10 @@ export function QrGeneratorCard() {
                 </div>
                  <div className="space-y-2">
                     <Label>Logo</Label>
-                    <div className="flex items-center gap-4">
+                    <div className="flex flex-wrap items-center gap-4">
                         <Button asChild variant="outline">
                            <label htmlFor="logo-upload" className="cursor-pointer">
-                            <Upload className="mr-2" />
+                            <Upload className="mr-2 h-4 w-4" />
                             Upload Logo
                             <input id="logo-upload" type="file" className="sr-only" accept="image/png, image/jpeg, image/svg+xml" onChange={handleLogoUpload} />
                            </label>
@@ -251,11 +273,13 @@ export function QrGeneratorCard() {
             </TabsContent>
         </Tabs>
         
-        <div className="relative flex h-72 w-72 items-center justify-center rounded-lg border border-dashed bg-muted/50 p-4 overflow-hidden mx-auto">
+        <div className="relative mx-auto flex items-center justify-center rounded-lg border border-dashed bg-muted/50 p-4 overflow-hidden"
+            style={{ width: qrCodeSize, height: qrCodeSize }}
+        >
           {isGenerating && (
             <QrCodeMatrixAnimation
               onComplete={() => {}}
-              size={256}
+              size={qrCodeSize - 32}
               color={selectedColor}
             />
           )}

@@ -80,7 +80,7 @@ export function QrCodeMatrixAnimation({
   return (
     <div
       className={cn(
-        'absolute inset-0 grid p-4 transition-opacity duration-500',
+        'absolute inset-0 grid transition-opacity duration-500 m-auto',
         !isAnimating && 'opacity-0'
       )}
       style={{
