@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import Image from 'next/image';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -13,142 +12,134 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Download, Loader2 } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Download, Loader2, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import type QRCodeStyling from 'qr-code-styling';
+import type { DotType, CornerSquareType } from 'qr-code-styling';
 
-const QrCodeAnimation = ({ onAnimationComplete }: { onAnimationComplete: () => void }) => {
-    const [grid, setGrid] = useState<boolean[][]>([]);
-  
-    useEffect(() => {
-      const size = 11; // Creates an 11x11 grid
-      const newGrid = Array(size)
-        .fill(null)
-        .map(() => Array(size).fill(false));
-      setGrid(newGrid);
-  
-      const shuffledIndices: { row: number; col: number }[] = [];
-      for (let i = 0; i < size; i++) {
-        for (let j = 0; j < size; j++) {
-          shuffledIndices.push({ row: i, col: j });
-        }
-      }
-  
-      for (let i = shuffledIndices.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffledIndices[i], shuffledIndices[j]] = [shuffledIndices[j], shuffledIndices[i]];
-      }
-  
-      let index = 0;
-      const interval = setInterval(() => {
-        if (index < shuffledIndices.length) {
-          const { row, col } = shuffledIndices[index];
-          setGrid((prevGrid) => {
-            const nextGrid = prevGrid.map(r => [...r]);
-            nextGrid[row][col] = Math.random() > 0.4;
-            return nextGrid;
-          });
-          index++;
-        } else {
-          clearInterval(interval);
-          onAnimationComplete();
-        }
-      }, 10);
-  
-      return () => clearInterval(interval);
-    }, [onAnimationComplete]);
-  
-    return (
-      <div className="grid grid-cols-11 gap-[2px] w-[220px] h-[220px] bg-muted/50 p-2">
-        {grid.flat().map((isFilled, i) => (
-          <div
-            key={i}
-            className={cn(
-              'w-full h-full transition-colors duration-200',
-              isFilled ? 'bg-primary' : 'bg-muted/60'
-            )}
-          />
-        ))}
-      </div>
-    );
-  };
-  
+// Dynamically import QRCodeStyling only on the client side
+const QRCodeStylingClient =
+  typeof window !== 'undefined' ? require('qr-code-styling') : null;
+
 const colorOptions = [
-    { name: 'Black', value: '000000' },
-    { name: 'Indigo', value: '4f46e5' },
-    { name: 'Teal', value: '14b8a6' },
-    { name: 'Crimson', value: 'dc2626' },
-    { name: 'Amber', value: 'f59e0b' },
+  { name: 'Black', value: '#000000' },
+  { name: 'Indigo', value: '#4f46e5' },
+  { name: 'Teal', value: '#14b8a6' },
+  { name: 'Crimson', value: '#dc2626' },
+  { name: 'Amber', value: '#f59e0b' },
+];
+
+const dotStyleOptions: {name: string, value: DotType}[] = [
+    { name: 'Square', value: 'square'},
+    { name: 'Dots', value: 'dots'},
+    { name: 'Rounded', value: 'rounded'},
+    { name: 'Extra Rounded', value: 'extra-rounded'},
+    { name: 'Classy', value: 'classy'},
+    { name: 'Classy Rounded', value: 'classy-rounded'},
+];
+
+const cornerStyleOptions: {name: string, value: CornerSquareType}[] = [
+    { name: 'Square', value: 'square'},
+    { name: 'Dot', value: 'dot'},
+    { name: 'Extra Rounded', value: 'extra-rounded'},
 ];
 
 export function QrGeneratorCard() {
   const [inputValue, setInputValue] = useState('');
-  const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
-  const [showAnimation, setShowAnimation] = useState(false);
-  const [showQrImage, setShowQrImage] = useState(false);
-  const [selectedColor, setSelectedColor] = useState('000000');
+  
+  // Styling options
+  const [selectedColor, setSelectedColor] = useState('#000000');
+  const [logo, setLogo] = useState<string | null>(null);
+  const [dotStyle, setDotStyle] = useState<DotType>('square');
+  const [cornerStyle, setCornerStyle] = useState<CornerSquareType>('square');
+
   const { toast } = useToast();
+  const qrRef = useRef<HTMLDivElement>(null);
+  const qrCodeInstance = useRef<QRCodeStyling | null>(null);
 
-  const handleGenerate = () => {
-    if (!inputValue.trim()) {
-      toast({
-        title: 'Input required',
-        description: 'Please enter text or a URL to generate a QR code.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    setIsGenerating(true);
-    setShowAnimation(true);
-    setShowQrImage(false);
-    setQrCodeUrl(''); // Clear previous QR code
-
-    const encodedValue = encodeURIComponent(inputValue);
-    const highResUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodedValue}&qzone=1&color=${selectedColor}`;
-    const img = new window.Image();
-    img.src = highResUrl;
-    img.onload = () => {
-        setQrCodeUrl(highResUrl);
-    };
-    img.onerror = () => {
-        setIsGenerating(false);
-        setShowAnimation(false);
-        toast({
-            title: 'Error',
-            description: 'Failed to generate QR code. The API might be down.',
-            variant: 'destructive',
+  useEffect(() => {
+    if (QRCodeStylingClient && qrRef.current) {
+        qrCodeInstance.current = new QRCodeStylingClient({
+            width: 256,
+            height: 256,
+            data: 'https://www.firebasestudio.ai',
+            image: '',
+            dotsOptions: {
+                color: '#000000',
+                type: 'square'
+            },
+            cornersSquareOptions: {
+                type: 'square'
+            },
+            backgroundOptions: {
+                color: '#ffffff',
+            },
+            imageOptions: {
+                crossOrigin: 'anonymous',
+                margin: 10
+            }
         });
+        qrCodeInstance.current.append(qrRef.current);
+    }
+  }, []);
+
+  const updateQrCode = () => {
+    if (!qrCodeInstance.current || !inputValue.trim()) return;
+
+    setIsGenerating(true);
+    qrCodeInstance.current.update({
+        data: inputValue,
+        dotsOptions: {
+            color: selectedColor,
+            type: dotStyle
+        },
+        cornersSquareOptions: {
+            type: cornerStyle
+        },
+        image: logo || ''
+    });
+    // Give it a moment to re-render
+    setTimeout(() => setIsGenerating(false), 500);
+  };
+
+  useEffect(() => {
+    // Debounce QR code update
+    const handler = setTimeout(() => {
+      if (inputValue) {
+        updateQrCode();
+      }
+    }, 300);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inputValue, selectedColor, dotStyle, cornerStyle, logo]);
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogo(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
-  const handleAnimationComplete = () => {
-    setShowAnimation(false);
-    if(qrCodeUrl) {
-        setShowQrImage(true);
-        setIsGenerating(false);
-    }
-  }
-
   const handleDownload = async () => {
-    if (!qrCodeUrl) return;
+    if (!qrCodeInstance.current || !inputValue) return;
     setIsDownloading(true);
 
     try {
-      const highResDownloadUrl = qrCodeUrl.replace('size=256x256', 'size=1024x1024');
-      const response = await fetch(highResDownloadUrl);
-      if (!response.ok) throw new Error('Failed to fetch QR code image.');
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'qrcode.png';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
+      await qrCodeInstance.current.download({
+        name: 'qrcode',
+        extension: 'png'
+      });
     } catch (error) {
       toast({
         title: 'Download failed',
@@ -165,86 +156,109 @@ export function QrGeneratorCard() {
       <CardHeader>
         <CardTitle className="font-headline text-3xl">QR Code Weaver</CardTitle>
         <CardDescription>
-          Enter text or a URL below to weave your digital code.
+          Customize your QR code with styles and an optional logo.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="qr-input">Text or URL</Label>
-          <div className="flex gap-2">
-            <Input
-              id="qr-input"
-              placeholder="e.g., https://example.com"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
-              disabled={isGenerating}
-            />
-            <Button onClick={handleGenerate} disabled={isGenerating || !inputValue}>
-              {isGenerating ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                'Weave'
-              )}
-            </Button>
-          </div>
+          <Input
+            id="qr-input"
+            placeholder="e.g., https://example.com"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            disabled={isGenerating}
+          />
         </div>
 
-        <div className="space-y-2">
-          <Label>Color</Label>
-          <div className="flex flex-wrap gap-2">
-            {colorOptions.map((color) => (
-              <Button
-                key={color.value}
-                variant="outline"
-                size="icon"
-                className={cn(
-                  'h-8 w-8 rounded-full',
-                  selectedColor === color.value && 'ring-2 ring-primary ring-offset-2'
-                )}
-                onClick={() => setSelectedColor(color.value)}
-                style={{ backgroundColor: `#${color.value}` }}
-                aria-label={`Select color ${color.name}`}
-              >
-                {selectedColor === color.value && <div className="h-4 w-4 rounded-full border-2 border-background" />}
-              </Button>
-            ))}
-          </div>
+        <Tabs defaultValue="style" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="style">Color</TabsTrigger>
+                <TabsTrigger value="dots">Dots</TabsTrigger>
+                <TabsTrigger value="corners">Corners</TabsTrigger>
+            </TabsList>
+            <TabsContent value="style" className="space-y-4 pt-4">
+                <div className="space-y-2">
+                    <Label>Color</Label>
+                    <div className="flex flex-wrap gap-2">
+                        {colorOptions.map((color) => (
+                        <Button
+                            key={color.value}
+                            variant="outline"
+                            size="icon"
+                            className={cn(
+                            'h-8 w-8 rounded-full',
+                            selectedColor === color.value && 'ring-2 ring-primary ring-offset-2'
+                            )}
+                            onClick={() => setSelectedColor(color.value)}
+                            style={{ backgroundColor: color.value }}
+                            aria-label={`Select color ${color.name}`}
+                        >
+                            {selectedColor === color.value && <div className="h-4 w-4 rounded-full border-2 border-background" />}
+                        </Button>
+                        ))}
+                    </div>
+                </div>
+                 <div className="space-y-2">
+                    <Label>Logo</Label>
+                    <div className="flex items-center gap-4">
+                        <Button asChild variant="outline">
+                           <label htmlFor="logo-upload" className="cursor-pointer">
+                            <Upload className="mr-2" />
+                            Upload Logo
+                            <input id="logo-upload" type="file" className="sr-only" accept="image/png, image/jpeg, image/svg+xml" onChange={handleLogoUpload} />
+                           </label>
+                        </Button>
+                        {logo && (
+                            <div className="relative">
+                                <img src={logo} alt="Logo Preview" className="h-10 w-10 rounded-md object-cover" />
+                                <button
+                                    onClick={() => setLogo(null)}
+                                    className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center"
+                                    aria-label="Remove logo"
+                                >
+                                    &times;
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </TabsContent>
+            <TabsContent value="dots" className="pt-4">
+                <div className="grid grid-cols-3 gap-2">
+                    {dotStyleOptions.map((option) => (
+                        <Button key={option.value} variant={dotStyle === option.value ? 'default' : 'outline'} onClick={() => setDotStyle(option.value)}>
+                            {option.name}
+                        </Button>
+                    ))}
+                </div>
+            </TabsContent>
+            <TabsContent value="corners" className="pt-4">
+                <div className="grid grid-cols-3 gap-2">
+                    {cornerStyleOptions.map((option) => (
+                        <Button key={option.value} variant={cornerStyle === option.value ? 'default' : 'outline'} onClick={() => setCornerStyle(option.value)}>
+                            {option.name}
+                        </Button>
+                    ))}
+                </div>
+            </TabsContent>
+        </Tabs>
+        
+        <div className="flex h-72 items-center justify-center rounded-lg border border-dashed bg-muted/50 p-4">
+            <div ref={qrRef} className={cn(isGenerating && 'opacity-50 transition-opacity')} />
+            {!inputValue && (
+                 <div className="absolute text-center text-sm text-muted-foreground">
+                    Enter a URL to see your QR code.
+                 </div>
+            )}
         </div>
 
-
-        <div className="flex h-64 items-center justify-center rounded-lg border border-dashed bg-muted/50 p-4">
-          {showAnimation && <QrCodeAnimation onAnimationComplete={handleAnimationComplete} />}
-
-          {showQrImage && qrCodeUrl && (
-            <div className="rounded-md bg-white p-2 shadow-sm">
-                <Image
-                src={qrCodeUrl}
-                alt="Generated QR Code"
-                width={220}
-                height={220}
-                className="transition-opacity duration-300 opacity-0"
-                onLoadingComplete={(image) => {
-                    image.classList.remove('opacity-0');
-                    setIsGenerating(false);
-                }}
-                />
-            </div>
-          )}
-
-          {!isGenerating && !showAnimation && !showQrImage && (
-            <div className="text-center text-sm text-muted-foreground">
-              Your QR code will appear here.
-            </div>
-          )}
-        </div>
       </CardContent>
       <CardFooter>
         <Button
           onClick={handleDownload}
-          variant="outline"
           className="w-full"
-          disabled={!qrCodeUrl || isGenerating || isDownloading}
+          disabled={!inputValue || isDownloading}
         >
           {isDownloading ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
