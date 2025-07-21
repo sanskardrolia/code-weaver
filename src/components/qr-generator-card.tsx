@@ -18,6 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import type QRCodeStyling from 'qr-code-styling';
 import type { DotType, CornerSquareType } from 'qr-code-styling';
+import { QrCodeMatrixAnimation } from './qr-code-matrix-animation';
 
 // Dynamically import QRCodeStyling only on the client side
 const QRCodeStylingClient =
@@ -250,14 +251,26 @@ export function QrGeneratorCard() {
             </TabsContent>
         </Tabs>
         
-        <div className="relative flex h-72 items-center justify-center rounded-lg border border-dashed bg-muted/50 p-4 overflow-hidden">
-            <div ref={qrRef} className={cn(isGenerating && 'opacity-20 transition-opacity duration-500')} />
-            {!inputValue && (
-                 <div className="absolute text-center text-sm text-muted-foreground">
-                    Enter a URL to see your QR code.
-                 </div>
+        <div className="relative flex h-72 w-72 items-center justify-center rounded-lg border border-dashed bg-muted/50 p-4 overflow-hidden mx-auto">
+          {isGenerating && (
+            <QrCodeMatrixAnimation
+              onComplete={() => {}}
+              size={256}
+              color={selectedColor}
+            />
+          )}
+          <div
+            ref={qrRef}
+            className={cn(
+              'transition-opacity duration-500',
+              (isGenerating || !inputValue) && 'opacity-0'
             )}
-             <div className={cn('scan-line', isGenerating && 'scanning')} />
+          />
+          {!inputValue && !isGenerating && (
+            <div className="absolute text-center text-sm text-muted-foreground">
+              Enter a URL to see your QR code.
+            </div>
+          )}
         </div>
 
       </CardContent>

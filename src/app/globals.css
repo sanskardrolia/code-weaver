@@ -62,36 +62,3 @@
     @apply bg-background text-foreground;
   }
 }
-
-@layer utilities {
-  .scan-line {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, transparent, hsl(var(--primary)), transparent);
-    animation: scan 1.5s ease-in-out infinite;
-    box-shadow: 0 0 10px hsl(var(--primary)), 0 0 20px hsl(var(--primary));
-    border-radius: 9999px;
-    opacity: 0;
-    animation-play-state: paused;
-  }
-
-  .scan-line.scanning {
-    opacity: 1;
-    animation-play-state: running;
-  }
-
-  @keyframes scan {
-    0% {
-      transform: translateY(0);
-    }
-    50% {
-      transform: translateY(17.75rem); /* 284px, which is 71 * 4px */
-    }
-    100% {
-      transform: translateY(0);
-    }
-  }
-}
