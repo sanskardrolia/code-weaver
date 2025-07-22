@@ -58,6 +58,7 @@ export function QrGeneratorCard() {
   const [dotStyle, setDotStyle] = useState<DotType>('square');
   const [cornerStyle, setCornerStyle] = useState<CornerSquareType>('square');
   const [rotation, setRotation] = useState({ x: 0, y: 0 });
+  const [bgColor, setBgColor] = useState('#ffffff');
   
   const { toast } = useToast();
   const qrRef = useRef<HTMLDivElement>(null);
@@ -73,6 +74,11 @@ export function QrGeneratorCard() {
   }
 
   useEffect(() => {
+    // Set background color based on theme
+    const isDarkMode = document.documentElement.classList.contains('dark');
+    setBgColor(isDarkMode ? '#0f172a' : '#ffffff');
+
+
     if (QRCodeStylingClient && qrRef.current) {
         qrCodeInstance.current = new QRCodeStylingClient({
             width: getQrCodeSize(),
@@ -87,7 +93,7 @@ export function QrGeneratorCard() {
                 type: 'square'
             },
             backgroundOptions: {
-                color: 'transparent',
+                color: isDarkMode ? '#0f172a' : '#ffffff',
             },
             imageOptions: {
                 crossOrigin: 'anonymous',
@@ -132,6 +138,9 @@ export function QrGeneratorCard() {
         cornersSquareOptions: {
             type: cornerStyle
         },
+        backgroundOptions: {
+            color: bgColor,
+        },
         image: logo || ''
     });
 
@@ -151,7 +160,7 @@ export function QrGeneratorCard() {
       clearTimeout(handler);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inputValue, selectedColor, dotStyle, cornerStyle, logo]);
+  }, [inputValue, selectedColor, dotStyle, cornerStyle, logo, bgColor]);
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
