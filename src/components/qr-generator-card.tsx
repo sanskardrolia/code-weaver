@@ -48,7 +48,7 @@ const cornerStyleOptions: {name: string, value: CornerSquareType}[] = [
 ];
 
 const QR_CODE_SIZE_LARGE = 288;
-const QR_CODE_SIZE_SMALL = 224;
+const QR_CODE_SIZE_SMALL = 256;
 
 export function QrGeneratorCard() {
   const [inputValue, setInputValue] = useState('');
@@ -68,7 +68,7 @@ export function QrGeneratorCard() {
 
   useEffect(() => {
     const updateSize = () => {
-      if (window.innerWidth < 640) { // sm breakpoint
+      if (window.innerWidth < 768) { // md breakpoint
         setQrCodeSize(QR_CODE_SIZE_SMALL);
       } else {
         setQrCodeSize(QR_CODE_SIZE_LARGE);
@@ -181,127 +181,130 @@ export function QrGeneratorCard() {
   };
 
   return (
-    <Card className="w-full max-w-md shadow-2xl shadow-primary/10">
-      <CardHeader>
+    <Card className="w-full max-w-4xl shadow-2xl shadow-primary/10">
+      <CardHeader className="text-center">
         <CardTitle className="font-headline text-3xl">QR Code Weaver</CardTitle>
         <CardDescription>
           Customize your QR code with styles and an optional logo.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="qr-input">Text or URL</Label>
-          <Input
-            id="qr-input"
-            placeholder="e.g., https://example.com"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            disabled={isGenerating}
-          />
-        </div>
-
-        <Tabs defaultValue="style" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="style">Color</TabsTrigger>
-                <TabsTrigger value="dots">Dots</TabsTrigger>
-                <TabsTrigger value="corners">Corners</TabsTrigger>
-            </TabsList>
-            <TabsContent value="style" className="space-y-4 pt-4">
-                <div className="space-y-2">
-                    <Label>Color</Label>
-                    <div className="flex flex-wrap gap-2">
-                        {colorOptions.map((color) => (
-                        <Button
-                            key={color.value}
-                            variant="outline"
-                            size="icon"
-                            className={cn(
-                            'h-8 w-8 rounded-full',
-                            selectedColor === color.value && 'ring-2 ring-primary ring-offset-2'
-                            )}
-                            onClick={() => setSelectedColor(color.value)}
-                            style={{ backgroundColor: color.value }}
-                            aria-label={`Select color ${color.name}`}
-                        >
-                            {selectedColor === color.value && <div className="h-4 w-4 rounded-full border-2 border-background" />}
-                        </Button>
-                        ))}
-                    </div>
-                </div>
-                 <div className="space-y-2">
-                    <Label>Logo</Label>
-                    <div className="flex flex-wrap items-center gap-4">
-                        <Button asChild variant="outline">
-                           <label htmlFor="logo-upload" className="cursor-pointer">
-                            <Upload className="mr-2 h-4 w-4" />
-                            Upload Logo
-                            <input id="logo-upload" type="file" className="sr-only" accept="image/png, image/jpeg, image/svg+xml" onChange={handleLogoUpload} />
-                           </label>
-                        </Button>
-                        {logo && (
-                            <div className="relative">
-                                <img src={logo} alt="Logo Preview" className="h-10 w-10 rounded-md object-cover" />
-                                <button
-                                    onClick={() => setLogo(null)}
-                                    className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center"
-                                    aria-label="Remove logo"
-                                >
-                                    &times;
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </TabsContent>
-            <TabsContent value="dots" className="pt-4">
-                <div className="grid grid-cols-3 gap-2">
-                    {dotStyleOptions.map((option) => (
-                        <Button key={option.value} variant={dotStyle === option.value ? 'default' : 'outline'} onClick={() => setDotStyle(option.value)}>
-                            {option.name}
-                        </Button>
-                    ))}
-                </div>
-            </TabsContent>
-            <TabsContent value="corners" className="pt-4">
-                <div className="grid grid-cols-3 gap-2">
-                    {cornerStyleOptions.map((option) => (
-                        <Button key={option.value} variant={cornerStyle === option.value ? 'default' : 'outline'} onClick={() => setCornerStyle(option.value)}>
-                            {option.name}
-                        </Button>
-                    ))}
-                </div>
-            </TabsContent>
-        </Tabs>
-        
-        <div className="relative mx-auto flex items-center justify-center rounded-lg border border-dashed bg-muted/50 p-4 overflow-hidden"
-            style={{ width: qrCodeSize, height: qrCodeSize }}
-        >
-          {isGenerating && (
-            <QrCodeMatrixAnimation
-              onComplete={() => {}}
-              size={qrCodeSize - 32}
-              color={selectedColor}
-            />
-          )}
-          <div
-            ref={qrRef}
-            className={cn(
-              'transition-opacity duration-500',
-              (isGenerating || !inputValue) && 'opacity-0'
+      <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 p-6">
+        <div className="flex items-center justify-center">
+          <div className="relative rounded-lg border border-dashed bg-muted/50 p-4 overflow-hidden"
+              style={{ width: qrCodeSize, height: qrCodeSize }}
+          >
+            {isGenerating && (
+              <QrCodeMatrixAnimation
+                onComplete={() => {}}
+                size={qrCodeSize - 32}
+                color={selectedColor}
+              />
             )}
-          />
-          {!inputValue && !isGenerating && (
-            <div className="absolute text-center text-sm text-muted-foreground">
-              Enter a URL to see your QR code.
-            </div>
-          )}
+            <div
+              ref={qrRef}
+              className={cn(
+                'transition-opacity duration-500',
+                (isGenerating || !inputValue) && 'opacity-0'
+              )}
+            />
+            {!inputValue && !isGenerating && (
+              <div className="absolute inset-0 flex items-center justify-center text-center text-sm text-muted-foreground p-4">
+                Enter a URL to see your QR code.
+              </div>
+            )}
+          </div>
         </div>
 
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="qr-input">Text or URL</Label>
+            <Input
+              id="qr-input"
+              placeholder="e.g., https://example.com"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              disabled={isGenerating}
+            />
+          </div>
+
+          <Tabs defaultValue="style" className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="style">Color & Logo</TabsTrigger>
+                  <TabsTrigger value="dots">Dots</TabsTrigger>
+                  <TabsTrigger value="corners">Corners</TabsTrigger>
+              </TabsList>
+              <TabsContent value="style" className="space-y-4 pt-4">
+                  <div className="space-y-2">
+                      <Label>Color</Label>
+                      <div className="flex flex-wrap gap-2">
+                          {colorOptions.map((color) => (
+                          <Button
+                              key={color.value}
+                              variant="outline"
+                              size="icon"
+                              className={cn(
+                              'h-8 w-8 rounded-full',
+                              selectedColor === color.value && 'ring-2 ring-primary ring-offset-2'
+                              )}
+                              onClick={() => setSelectedColor(color.value)}
+                              style={{ backgroundColor: color.value }}
+                              aria-label={`Select color ${color.name}`}
+                          >
+                              {selectedColor === color.value && <div className="h-4 w-4 rounded-full border-2 border-background" />}
+                          </Button>
+                          ))}
+                      </div>
+                  </div>
+                  <div className="space-y-2">
+                      <Label>Logo</Label>
+                      <div className="flex flex-wrap items-center gap-4">
+                          <Button asChild variant="outline">
+                            <label htmlFor="logo-upload" className="cursor-pointer">
+                              <Upload className="mr-2 h-4 w-4" />
+                              Upload Logo
+                              <input id="logo-upload" type="file" className="sr-only" accept="image/png, image/jpeg, image/svg+xml" onChange={handleLogoUpload} />
+                            </label>
+                          </Button>
+                          {logo && (
+                              <div className="relative">
+                                  <img src={logo} alt="Logo Preview" className="h-10 w-10 rounded-md object-cover" />
+                                  <button
+                                      onClick={() => setLogo(null)}
+                                      className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center"
+                                      aria-label="Remove logo"
+                                  >
+                                      &times;
+                                  </button>
+                              </div>
+                          )}
+                      </div>
+                  </div>
+              </TabsContent>
+              <TabsContent value="dots" className="pt-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {dotStyleOptions.map((option) => (
+                          <Button key={option.value} variant={dotStyle === option.value ? 'default' : 'outline'} onClick={() => setDotStyle(option.value)}>
+                              {option.name}
+                          </Button>
+                      ))}
+                  </div>
+              </TabsContent>
+              <TabsContent value="corners" className="pt-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {cornerStyleOptions.map((option) => (
+                          <Button key={option.value} variant={cornerStyle === option.value ? 'default' : 'outline'} onClick={() => setCornerStyle(option.value)}>
+                              {option.name}
+                          </Button>
+                      ))}
+                  </div>
+              </TabsContent>
+          </Tabs>
+        </div>
       </CardContent>
       <CardFooter>
         <Button
           onClick={handleDownload}
-          className="w-full"
+          className="w-full md:w-1/2 mx-auto"
           disabled={!inputValue || isDownloading || isGenerating}
         >
           {isDownloading ? (
