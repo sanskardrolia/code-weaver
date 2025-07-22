@@ -28,12 +28,14 @@ const Logo = () => (
 export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 max-w-screen-2xl items-center justify-between">
-        <div className="mr-4 flex items-center">
-          <Logo />
-          <span className="ml-2 font-bold font-headline">Code Weaver</span>
+      <div className="container flex h-14 max-w-screen-2xl items-center">
+        <div className="flex-1 flex items-center justify-start">
+          <div className="mr-4 flex items-center">
+            <Logo />
+            <span className="ml-2 font-bold font-headline">Code Weaver</span>
+          </div>
         </div>
-        <div className="hidden md:block">
+        <div className="hidden md:flex flex-1 items-center justify-center">
           <p className="text-center text-sm text-muted-foreground">
             made with ❤️ by{' '}
             <a
@@ -46,7 +48,9 @@ export function Header() {
             </a>
           </p>
         </div>
-        <ThemeToggle />
+        <div className="flex-1 flex items-center justify-end">
+          <ThemeToggle />
+        </div>
       </div>
     </header>
   );
