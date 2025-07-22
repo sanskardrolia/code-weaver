@@ -74,8 +74,7 @@ export function QrGeneratorCard() {
   }
 
   useEffect(() => {
-    const isDarkMode = document.documentElement.classList.contains('dark');
-    const defaultBgColor = isDarkMode ? '#0f172a' : '#ffffff';
+    const defaultBgColor = '#ffffff';
     setBgColor(defaultBgColor);
 
     if (QRCodeStylingClient && qrRef.current) {
@@ -119,9 +118,7 @@ export function QrGeneratorCard() {
           mutation.type === 'attributes' &&
           mutation.attributeName === 'class'
         ) {
-          const isDarkMode = document.documentElement.classList.contains('dark');
-          const newBgColor = isDarkMode ? '#0f172a' : '#ffffff';
-          setBgColor(newBgColor);
+          // No longer auto-switching background with theme
         }
       });
     });
@@ -247,7 +244,7 @@ export function QrGeneratorCard() {
           <div 
               ref={qrContainerRef}
               className={cn(
-                "relative rounded-lg border border-dashed bg-card p-4 w-full max-w-[320px] transition-transform duration-300 ease-out",
+                "relative rounded-lg border border-dashed p-4 w-full max-w-[320px] transition-transform duration-300 ease-out bg-card",
                 !isGenerating && inputValue && 'pulse-glow'
               )}
               style={{ 
@@ -265,7 +262,7 @@ export function QrGeneratorCard() {
             <div
               ref={qrRef}
               className={cn(
-                'transition-opacity duration-500 flex items-center justify-center bg-card',
+                'transition-opacity duration-500 flex items-center justify-center',
                 (isGenerating || !inputValue) && 'opacity-0'
               )}
             />
