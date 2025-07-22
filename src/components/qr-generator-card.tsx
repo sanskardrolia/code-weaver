@@ -47,8 +47,7 @@ const cornerStyleOptions: {name: string, value: CornerSquareType}[] = [
     { name: 'Extra Rounded', value: 'extra-rounded'},
 ];
 
-const QR_CODE_SIZE_LARGE = 288;
-const QR_CODE_SIZE_SMALL = 256;
+const QR_CODE_CONTAINER_SIZE = 320; // Used as the base for aspect ratio
 
 export function QrGeneratorCard() {
   const [inputValue, setInputValue] = useState('');
@@ -60,30 +59,25 @@ export function QrGeneratorCard() {
   const [logo, setLogo] = useState<string | null>(null);
   const [dotStyle, setDotStyle] = useState<DotType>('square');
   const [cornerStyle, setCornerStyle] = useState<CornerSquareType>('square');
-  const [qrCodeSize, setQrCodeSize] = useState(QR_CODE_SIZE_LARGE);
-
+  
   const { toast } = useToast();
   const qrRef = useRef<HTMLDivElement>(null);
   const qrCodeInstance = useRef<QRCodeStyling | null>(null);
+  const qrContainerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const updateSize = () => {
-      if (window.innerWidth < 768) { // md breakpoint
-        setQrCodeSize(QR_CODE_SIZE_SMALL);
-      } else {
-        setQrCodeSize(QR_CODE_SIZE_LARGE);
-      }
-    };
-    window.addEventListener('resize', updateSize);
-    updateSize(); // Set initial size
-    return () => window.removeEventListener('resize', updateSize);
-  }, []);
+  const getQrCodeSize = () => {
+    if (qrContainerRef.current) {
+        // Use padding to ensure it fits within the border and dashed outline
+        return qrContainerRef.current.offsetWidth - 32; 
+    }
+    return 256;
+  }
 
   useEffect(() => {
     if (QRCodeStylingClient && qrRef.current) {
         qrCodeInstance.current = new QRCodeStylingClient({
-            width: qrCodeSize,
-            height: qrCodeSize,
+            width: getQrCodeSize(),
+            height: getQrCodeSize(),
             data: 'https://www.firebasestudio.ai',
             image: '',
             dotsOptions: {
@@ -103,23 +97,34 @@ export function QrGeneratorCard() {
         });
         qrCodeInstance.current.append(qrRef.current);
     }
-  }, [qrCodeSize]);
-
-  useEffect(() => {
-    if (qrCodeInstance.current) {
-      qrCodeInstance.current.update({
-        width: qrCodeSize,
-        height: qrCodeSize,
-      });
+    
+    const handleResize = () => {
+        if (qrCodeInstance.current) {
+            qrCodeInstance.current.update({
+                width: getQrCodeSize(),
+                height: getQrCodeSize(),
+            });
+        }
     }
-  }, [qrCodeSize]);
+    
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+        window.removeEventListener('resize', handleResize);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const updateQrCode = () => {
     if (!qrCodeInstance.current || !inputValue.trim()) return;
 
     setIsGenerating(true);
     
+    const size = getQrCodeSize();
+
     qrCodeInstance.current.update({
+        width: size,
+        height: size,
         data: inputValue,
         dotsOptions: {
             color: selectedColor,
@@ -179,6 +184,8 @@ export function QrGeneratorCard() {
       setIsDownloading(false);
     }
   };
+  
+  const qrAnimationSize = getQrCodeSize();
 
   return (
     <Card className="w-full max-w-4xl shadow-2xl shadow-primary/10">
@@ -190,20 +197,22 @@ export function QrGeneratorCard() {
       </CardHeader>
       <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 p-6">
         <div className="flex items-center justify-center">
-          <div className="relative rounded-lg border border-dashed bg-muted/50 p-4 overflow-hidden"
-              style={{ width: qrCodeSize, height: qrCodeSize }}
+          <div 
+              ref={qrContainerRef}
+              className="relative rounded-lg border border-dashed bg-muted/50 p-4 w-full max-w-[320px]"
+              style={{ aspectRatio: '1 / 1' }}
           >
             {isGenerating && (
               <QrCodeMatrixAnimation
                 onComplete={() => {}}
-                size={qrCodeSize - 32}
+                size={qrAnimationSize}
                 color={selectedColor}
               />
             )}
             <div
               ref={qrRef}
               className={cn(
-                'transition-opacity duration-500',
+                'transition-opacity duration-500 flex items-center justify-center',
                 (isGenerating || !inputValue) && 'opacity-0'
               )}
             />
