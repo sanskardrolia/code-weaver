@@ -47,8 +47,6 @@ const cornerStyleOptions: {name: string, value: CornerSquareType}[] = [
     { name: 'Extra Rounded', value: 'extra-rounded'},
 ];
 
-const QR_CODE_CONTAINER_SIZE = 320; // Used as the base for aspect ratio
-
 export function QrGeneratorCard() {
   const [inputValue, setInputValue] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -59,6 +57,7 @@ export function QrGeneratorCard() {
   const [logo, setLogo] = useState<string | null>(null);
   const [dotStyle, setDotStyle] = useState<DotType>('square');
   const [cornerStyle, setCornerStyle] = useState<CornerSquareType>('square');
+  const [rotation, setRotation] = useState({ x: 0, y: 0 });
   
   const { toast } = useToast();
   const qrRef = useRef<HTMLDivElement>(null);
@@ -88,7 +87,7 @@ export function QrGeneratorCard() {
                 type: 'square'
             },
             backgroundOptions: {
-                color: '#ffffff',
+                color: 'transparent',
             },
             imageOptions: {
                 crossOrigin: 'anonymous',
@@ -187,6 +186,22 @@ export function QrGeneratorCard() {
   
   const qrAnimationSize = getQrCodeSize();
 
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left - rect.width / 2;
+    const y = e.clientY - rect.top - rect.height / 2;
+    
+    const rotationY = (x / (rect.width / 2)) * 15; // Max rotation 15 degrees
+    const rotationX = (-y / (rect.height / 2)) * 15; // Max rotation 15 degrees
+
+    setRotation({ x: rotationX, y: rotationY });
+  }
+
+  const handleMouseLeave = () => {
+    setRotation({ x: 0, y: 0 });
+  }
+
+
   return (
     <Card className="w-full max-w-4xl shadow-2xl shadow-primary/10">
       <CardHeader className="text-center">
@@ -196,11 +211,19 @@ export function QrGeneratorCard() {
         </CardDescription>
       </CardHeader>
       <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 p-6">
-        <div className="flex items-center justify-center">
+        <div 
+          className="flex items-center justify-center"
+          style={{ perspective: '1000px' }}
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
+        >
           <div 
               ref={qrContainerRef}
-              className="relative rounded-lg border border-dashed bg-muted/50 p-4 w-full max-w-[320px]"
-              style={{ aspectRatio: '1 / 1' }}
+              className="relative rounded-lg border border-dashed bg-muted/50 p-4 w-full max-w-[320px] transition-transform duration-300 ease-out"
+              style={{ 
+                aspectRatio: '1 / 1',
+                transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
+               }}
           >
             {isGenerating && (
               <QrCodeMatrixAnimation
