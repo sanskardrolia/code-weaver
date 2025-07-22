@@ -228,7 +228,10 @@ export function QrGeneratorCard() {
         >
           <div 
               ref={qrContainerRef}
-              className="relative rounded-lg border border-dashed bg-muted/50 p-4 w-full max-w-[320px] transition-transform duration-300 ease-out"
+              className={cn(
+                "relative rounded-lg border border-dashed bg-card p-4 w-full max-w-[320px] transition-transform duration-300 ease-out",
+                !isGenerating && inputValue && 'pulse-glow'
+              )}
               style={{ 
                 aspectRatio: '1 / 1',
                 transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
