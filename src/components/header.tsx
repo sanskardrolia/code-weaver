@@ -33,6 +33,19 @@ export function Header() {
           <Logo />
           <span className="ml-2 font-bold font-headline">Code Weaver</span>
         </div>
+        <div className="hidden md:block">
+          <p className="text-center text-sm text-muted-foreground">
+            made with ❤️ for you guys by{' '}
+            <a
+              href="https://www.linkedin.com/in/sanskardrolia"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium underline underline-offset-4"
+            >
+              Sanskar
+            </a>
+          </p>
+        </div>
         <ThemeToggle />
       </div>
     </header>
