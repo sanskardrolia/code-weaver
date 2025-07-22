@@ -76,7 +76,8 @@ export function QrGeneratorCard() {
   useEffect(() => {
     // Set background color based on theme
     const isDarkMode = document.documentElement.classList.contains('dark');
-    setBgColor(isDarkMode ? '#0f172a' : '#ffffff');
+    const newBgColor = isDarkMode ? '#0f172a' : '#ffffff';
+    setBgColor(newBgColor);
 
 
     if (QRCodeStylingClient && qrRef.current) {
@@ -93,7 +94,7 @@ export function QrGeneratorCard() {
                 type: 'square'
             },
             backgroundOptions: {
-                color: isDarkMode ? '#0f172a' : '#ffffff',
+                color: newBgColor,
             },
             imageOptions: {
                 crossOrigin: 'anonymous',
@@ -247,7 +248,7 @@ export function QrGeneratorCard() {
             <div
               ref={qrRef}
               className={cn(
-                'transition-opacity duration-500 flex items-center justify-center',
+                'transition-opacity duration-500 flex items-center justify-center bg-card',
                 (isGenerating || !inputValue) && 'opacity-0'
               )}
             />
@@ -280,7 +281,7 @@ export function QrGeneratorCard() {
               <TabsContent value="style" className="space-y-4 pt-4">
                   <div className="space-y-2">
                       <Label>Color</Label>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                           {colorOptions.map((color) => (
                           <Button
                               key={color.value}
@@ -297,6 +298,19 @@ export function QrGeneratorCard() {
                               {selectedColor === color.value && <div className="h-4 w-4 rounded-full border-2 border-background" />}
                           </Button>
                           ))}
+                          <div className="relative flex items-center">
+                            <Input
+                                type="text"
+                                value={selectedColor}
+                                onChange={(e) => setSelectedColor(e.target.value)}
+                                className="w-28 pl-9"
+                                aria-label="Hex color code"
+                            />
+                            <div
+                                className="absolute left-2 h-6 w-6 rounded-md border"
+                                style={{ backgroundColor: selectedColor }}
+                            />
+                          </div>
                       </div>
                   </div>
                   <div className="space-y-2">
