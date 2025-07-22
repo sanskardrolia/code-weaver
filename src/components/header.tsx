@@ -35,7 +35,7 @@ export function Header() {
         </div>
         <div className="hidden md:block">
           <p className="text-center text-sm text-muted-foreground">
-            made with ❤️ for you guys by{' '}
+            made with ❤️ by{' '}
             <a
               href="https://www.linkedin.com/in/sanskardrolia"
               target="_blank"
