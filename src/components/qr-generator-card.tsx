@@ -74,51 +74,68 @@ export function QrGeneratorCard() {
   }
 
   useEffect(() => {
-    // Set background color based on theme
     const isDarkMode = document.documentElement.classList.contains('dark');
-    const newBgColor = isDarkMode ? '#0f172a' : '#ffffff';
-    setBgColor(newBgColor);
-
+    const defaultBgColor = isDarkMode ? '#0f172a' : '#ffffff';
+    setBgColor(defaultBgColor);
 
     if (QRCodeStylingClient && qrRef.current) {
-        qrCodeInstance.current = new QRCodeStylingClient({
-            width: getQrCodeSize(),
-            height: getQrCodeSize(),
-            data: 'https://www.firebasestudio.ai',
-            image: '',
-            dotsOptions: {
-                color: '#000000',
-                type: 'square'
-            },
-            cornersSquareOptions: {
-                type: 'square'
-            },
-            backgroundOptions: {
-                color: newBgColor,
-            },
-            imageOptions: {
-                crossOrigin: 'anonymous',
-                margin: 10
-            }
-        });
-        qrCodeInstance.current.append(qrRef.current);
+      qrCodeInstance.current = new QRCodeStylingClient({
+        width: getQrCodeSize(),
+        height: getQrCodeSize(),
+        data: 'https://www.firebasestudio.ai',
+        image: '',
+        dotsOptions: {
+          color: '#000000',
+          type: 'square',
+        },
+        cornersSquareOptions: {
+          type: 'square',
+        },
+        backgroundOptions: {
+          color: defaultBgColor,
+        },
+        imageOptions: {
+          crossOrigin: 'anonymous',
+          margin: 10,
+        },
+      });
+      qrCodeInstance.current.append(qrRef.current);
     }
-    
+
     const handleResize = () => {
-        if (qrCodeInstance.current) {
-            qrCodeInstance.current.update({
-                width: getQrCodeSize(),
-                height: getQrCodeSize(),
-            });
-        }
-    }
-    
+      if (qrCodeInstance.current) {
+        qrCodeInstance.current.update({
+          width: getQrCodeSize(),
+          height: getQrCodeSize(),
+        });
+      }
+    };
+
     window.addEventListener('resize', handleResize);
-    
+
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (
+          mutation.type === 'attributes' &&
+          mutation.attributeName === 'class'
+        ) {
+          const isDarkMode = document.documentElement.classList.contains('dark');
+          const newBgColor = isDarkMode ? '#0f172a' : '#ffffff';
+          setBgColor(newBgColor);
+        }
+      });
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+
     return () => {
-        window.removeEventListener('resize', handleResize);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+      window.removeEventListener('resize', handleResize);
+      observer.disconnect();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const updateQrCode = () => {
@@ -280,7 +297,7 @@ export function QrGeneratorCard() {
               </TabsList>
               <TabsContent value="style" className="space-y-4 pt-4">
                   <div className="space-y-2">
-                      <Label>Color</Label>
+                      <Label>Foreground Color</Label>
                       <div className="flex flex-wrap items-center gap-2">
                           {colorOptions.map((color) => (
                           <Button
@@ -309,6 +326,24 @@ export function QrGeneratorCard() {
                             <div
                                 className="absolute left-2 h-6 w-6 rounded-md border"
                                 style={{ backgroundColor: selectedColor }}
+                            />
+                          </div>
+                      </div>
+                  </div>
+                  <div className="space-y-2">
+                      <Label>Background Color</Label>
+                      <div className="flex flex-wrap items-center gap-2">
+                          <div className="relative flex items-center">
+                            <Input
+                                type="text"
+                                value={bgColor}
+                                onChange={(e) => setBgColor(e.target.value)}
+                                className="w-28 pl-9"
+                                aria-label="Hex background color code"
+                            />
+                            <div
+                                className="absolute left-2 h-6 w-6 rounded-md border"
+                                style={{ backgroundColor: bgColor }}
                             />
                           </div>
                       </div>
