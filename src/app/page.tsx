@@ -30,11 +30,6 @@ const features = [
     title: 'Instant Generation',
     description: 'See your QR code update in real-time as you type and customize.',
   },
-  {
-    icon: <Button variant="default">Download PNG</Button>,
-    title: 'High-Quality Download',
-    description: 'Download your final QR code as a high-quality PNG file, ready for print.',
-  },
 ];
 
 
