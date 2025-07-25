@@ -1,4 +1,6 @@
 import { ThemeToggle } from '@/components/theme-toggle';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 const Logo = () => (
   <svg
@@ -30,25 +32,28 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 max-w-screen-2xl items-center">
         <div className="flex-1 flex items-center justify-start">
-          <div className="mr-4 flex items-center">
+          <Link href="/" className="mr-4 flex items-center">
             <Logo />
             <span className="ml-2 font-bold font-headline">Code Weaver</span>
-          </div>
+          </Link>
         </div>
         <div className="hidden md:flex flex-1 items-center justify-center">
-          <p className="text-center text-sm text-muted-foreground">
-            made with ❤️ by{' '}
-            <a
-              href="https://www.linkedin.com/in/sanskardrolia"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-medium underline underline-offset-4"
-            >
-              Sanskar
-            </a>
-          </p>
+          <Button asChild variant="link">
+              <Link href="/generator">Generator</Link>
+          </Button>
         </div>
-        <div className="flex-1 flex items-center justify-end">
+        <div className="flex-1 flex items-center justify-end space-x-4">
+            <p className="text-center text-sm text-muted-foreground hidden lg:block">
+                made with ❤️ by{' '}
+                <a
+                href="https://www.linkedin.com/in/sanskardrolia"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium underline underline-offset-4"
+                >
+                Sanskar
+                </a>
+            </p>
           <ThemeToggle />
         </div>
       </div>
