@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Palette, Gem, ImageIcon, Sparkles, Move3d } from 'lucide-react';
 import Link from 'next/link';
-import Image from 'next/image';
 
 const features = [
   {
@@ -43,27 +42,17 @@ export default function LandingPage() {
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="container mx-auto grid grid-cols-1 items-center gap-12 px-8 py-16 md:grid-cols-2 lg:py-24">
-        <div className="flex flex-col items-start text-left">
+      <section className="container mx-auto grid grid-cols-1 items-center gap-12 px-8 py-16 lg:py-24">
+        <div className="flex flex-col items-center text-center">
           <h1 className="mb-4 text-4xl font-extrabold tracking-tight text-foreground lg:text-5xl">
             Create Stunning QR Codes in Seconds
           </h1>
-          <p className="mb-8 text-lg text-muted-foreground">
+          <p className="mb-8 text-lg text-muted-foreground max-w-2xl">
             Weave your brand into a custom QR code. Free, deeply customizable, and ready to download instantly. No sign-up required.
           </p>
           <Button asChild size="lg">
             <Link href="/generator">Create Your QR Code Now</Link>
           </Button>
-        </div>
-        <div className="flex items-center justify-center">
-            <Image 
-                src="https://placehold.co/500x500.png" 
-                alt="QR Code Illustration" 
-                width={500} 
-                height={500}
-                className="rounded-lg shadow-2xl shadow-primary/20"
-                data-ai-hint="abstract qr code"
-            />
         </div>
       </section>
 
